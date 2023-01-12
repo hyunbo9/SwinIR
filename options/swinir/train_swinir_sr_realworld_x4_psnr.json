@@ -17,7 +17,7 @@
     "train": {
       "name": "train_dataset"           // just name
       , "dataset_type": "blindsr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "trainsets/trainH"// path of H training dataset. DIV2K (800 training images) + Flickr2K (2650 images) + + OST (10324 images)
+      , "dataroot_H": "trainsets/trainH/DIV2K/DIV2K_train_HR" // path of H training dataset. DIV2K (800 training images) + Flickr2K (2650 images) + + OST (10324 images)
       , "dataroot_L": null            // path of L training dataset
 
       , "degradation_type": "bsrgan"    // "bsrgan" | "bsrgan_plus"
@@ -28,13 +28,13 @@
 
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 16
-      , "dataloader_batch_size": 32      // batch size 1 | 16 | 32 | 48 | 64 | 128. Total batch size =4x8=32 in SwinIR
+      , "dataloader_batch_size": 8      // batch size 1 | 16 | 32 | 48 | 64 | 128. Total batch size =4x8=32 in SwinIR
     }
     , "test": {
       "name": "test_dataset"            // just name
       , "dataset_type": "sr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "testsets/Set5/HR"  // path of H testing dataset
-      , "dataroot_L": "testsets/Set5/LR_bicubic/X4"              // path of L testing dataset
+      , "dataroot_H": "testsets/Set5/original"  // path of H testing dataset
+      , "dataroot_L": "testsets/Set5/LRbicx4"              // path of L testing dataset
 
     }
   }
