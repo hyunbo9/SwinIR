@@ -640,6 +640,14 @@ def calculate_psnr(img1, img2, border=0):
         return float('inf')
     return 20 * math.log10(255.0 / math.sqrt(mse))
 
+# --------------------------------------------
+# PSNR_Y
+# --------------------------------------------
+def calculate_psnr_y(img1, img2, border=0):
+    img1 = rgb2ycbcr(img1, only_y=True)
+    img2 = rgb2ycbcr(img2, only_y=True)
+
+    return calculate_psnr(img1, img2, border=border)
 
 # --------------------------------------------
 # SSIM

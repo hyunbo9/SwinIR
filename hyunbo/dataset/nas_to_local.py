@@ -3,7 +3,6 @@ import os
 
 NAS_ADDRESS = "/media/NAS3/CIPLAB/users/hyunbo/super_resolution/swinir"
 
-
 def main():
     folder_list = [
         "superresolution",
@@ -12,7 +11,7 @@ def main():
     ]
 
     for folder in folder_list:
-        move_to_nas(folder)
+        nas_to_local(folder)
 
 def nas_to_local(folder):
     
@@ -23,7 +22,7 @@ def nas_to_local(folder):
         print(f"finish removing {folder}")
 
     print(f"##### copy progress in {folder} #####")
-    shutil.copytree(folder, os.path.join(NAS_ADDRESS, folder))
+    shutil.copytree(os.path.join(NAS_ADDRESS, folder), folder)
     print("##### copy progress finish #####")
 
 if __name__ == "__main__":

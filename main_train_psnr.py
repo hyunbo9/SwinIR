@@ -30,7 +30,6 @@ from models.select_model import define_Model
 # --------------------------------------------
 '''
 
-
 def main(json_path='options/train_msrresnet_psnr.json'):
 
     '''
@@ -210,6 +209,7 @@ def main(json_path='options/train_msrresnet_psnr.json'):
             if current_step % opt['train']['checkpoint_test'] == 0 and opt['rank'] == 0:
 
                 avg_psnr = 0.0
+                avg_psnr_y = 0.0
                 idx = 0
 
                 for test_data in test_loader:
@@ -230,22 +230,26 @@ def main(json_path='options/train_msrresnet_psnr.json'):
                     # -----------------------
                     # save estimated image E
                     # -----------------------
+
                     save_img_path = os.path.join(img_dir, '{:s}_{:d}.png'.format(img_name, current_step))
                     util.imsave(E_img, save_img_path)
 
                     # -----------------------
-                    # calculate PSNR
+                    # calculate PSNR and PSNRY
                     # -----------------------
                     current_psnr = util.calculate_psnr(E_img, H_img, border=border)
+                    current_psnr_y = util.calculate_psnr_y(E_img, H_img, border=border)
 
                     logger.info('{:->4d}--> {:>10s} | {:<4.2f}dB'.format(idx, image_name_ext, current_psnr))
 
                     avg_psnr += current_psnr
+                    avg_psnr_y += current_psnr_y
 
                 avg_psnr = avg_psnr / idx
+                avg_psnr_y = avg_psnr_y / idx 
 
                 # testing log
-                logger.info('<epoch:{:3d}, iter:{:8,d}, Average PSNR : {:<.2f}dB\n'.format(epoch, current_step, avg_psnr))
+                logger.info('<epoch:{:3d}, iter:{:8,d}, Average PSNR : {:<.2f}dB, Average PSNR_Y : {:<.2f}db\n'.format(epoch, current_step, avg_psnr, avg_psnr_y))
 
 if __name__ == '__main__':
     main()
