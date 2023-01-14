@@ -76,6 +76,6 @@
 
     , "checkpoint_test": 5000           // for testing
     , "checkpoint_save": 5000           // for saving model
-    , "checkpoint_print": 200           // for print
+    , "checkpoint_print": 2500           // for print
   }
 }

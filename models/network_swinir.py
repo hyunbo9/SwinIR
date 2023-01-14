@@ -614,6 +614,19 @@ class UpsampleOneStep(nn.Sequential):
         flops = H * W * self.num_feat * 3 * 9
         return flops
 
+class BicubicUpsampler(nn.Module):
+    def __init__(self, embed_dim, output_image_size):
+        from hyunbo import imresize
+
+        self.output_image_size = output_image_size
+        self.last_conv = nn.Conv2d(embed_dim, 3, 3, 1, 1)
+
+    def forward(self, x):
+        x = imresize.imresize(x, sizes=(self.output_image_size, self.output_image_size))
+        x = self.last_conv(x)
+        return x 
+
+
 
 class SwinIR(nn.Module):
     r""" SwinIR
@@ -757,6 +770,10 @@ class SwinIR(nn.Module):
             self.conv_hr = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
             self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
             self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
+        elif self.upsampler == 'bicubic':
+            # TODO: modify output image size to variable from config
+            self.upsample = BicubicUpsampler(embed_dim=embed_dim, output_image_size=192)
+
         else:
             # for image denoising and JPEG compression artifact reduction
             self.conv_last = nn.Conv2d(embed_dim, num_out_ch, 3, 1, 1)
