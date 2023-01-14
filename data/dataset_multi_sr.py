@@ -20,6 +20,8 @@ class DatasetMultiSR(data.Dataset):
         self.n_channels = opt['n_channels'] if opt['n_channels'] else 3
         self.sf_list = opt['scale'] if opt['scale'] else [2, 3, 4]
         self.patch_size = self.opt['H_size'] if self.opt['H_size'] else 96
+
+        self.batch_size = self.opt['dataloader_batch_size']
         # ! self.L_size = self.patch_size // self.sf
         # self.L_size = [self.patch_size / sf for sf in self.sf_list]
 
@@ -34,7 +36,10 @@ class DatasetMultiSR(data.Dataset):
             assert len(self.paths_L) == len(self.paths_H), 'L/H mismatch - {}, {}.'.format(len(self.paths_L), len(self.paths_H))
 
     def __getitem__(self, index):
-        sf = random.choice(self.sf_list)
+
+        scale_index = (index // self.batch_size) % len(self.sf_list)
+        sf = self.sf_list[scale_index]
+
         L_size = self.patch_size // sf
 
         L_path = None

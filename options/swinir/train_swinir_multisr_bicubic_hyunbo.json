@@ -22,9 +22,9 @@
 
       , "H_size": 192                   // 96/144|192/384 | 128/192/256/512. LR patch size is set to 48 or 64 when compared with RCAN or RRDB.
 
-      , "dataloader_shuffle": true
+      , "dataloader_shuffle": false      // false or true 
       , "dataloader_num_workers": 16
-      , "dataloader_batch_size": 8       // batch size 1 | 16 | 32 | 48 | 64 | 128. Total batch size =4x8=32 in SwinIR
+      , "dataloader_batch_size": 4       // batch size 1 | 16 | 32 | 48 | 64 | 128. Total batch size =4x8=32 in SwinIR
     }
     , "test": {
       "name": "test_dataset"            // just name
@@ -71,11 +71,11 @@
     , "G_regularizer_orthstep": null    // unused
     , "G_regularizer_clipstep": null    // unused
 
-    , "G_param_strict": true
-    , "E_param_strict": true
+    , "G_param_strict": false // true or false
+    , "E_param_strict": false // true or false
 
     , "checkpoint_test": 5000           // for testing
     , "checkpoint_save": 5000           // for saving model
-    , "checkpoint_print": 200           // for print
+    , "checkpoint_print": 1           // for print
   }
 }

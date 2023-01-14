@@ -10,6 +10,8 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
+from hyunbo import imresize
+
 
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -615,15 +617,13 @@ class UpsampleOneStep(nn.Sequential):
         return flops
 
 class BicubicUpsampler(nn.Module):
-    def __init__(self, embed_dim, output_image_size):
-        from hyunbo import imresize
-
+    def __init__(self, output_image_size):
+        super(BicubicUpsampler, self).__init__()
         self.output_image_size = output_image_size
-        self.last_conv = nn.Conv2d(embed_dim, 3, 3, 1, 1)
+
 
     def forward(self, x):
         x = imresize.imresize(x, sizes=(self.output_image_size, self.output_image_size))
-        x = self.last_conv(x)
         return x 
 
 
@@ -772,8 +772,10 @@ class SwinIR(nn.Module):
             self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
         elif self.upsampler == 'bicubic':
             # TODO: modify output image size to variable from config
-            self.upsample = BicubicUpsampler(embed_dim=embed_dim, output_image_size=192)
-
+            self.conv_before_upsample = nn.Sequential(nn.Conv2d(embed_dim, num_feat, 3, 1, 1),
+                                                    nn.LeakyReLU(inplace=True))
+            self.upsample = BicubicUpsampler(output_image_size=192)
+            self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
         else:
             # for image denoising and JPEG compression artifact reduction
             self.conv_last = nn.Conv2d(embed_dim, num_out_ch, 3, 1, 1)
@@ -820,6 +822,7 @@ class SwinIR(nn.Module):
         return x
 
     def forward(self, x):
+
         H, W = x.shape[2:]
         x = self.check_image_size(x)
 
@@ -845,6 +848,11 @@ class SwinIR(nn.Module):
             x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
             x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
+        elif self.upsampler == 'bicubic':
+            x = self.conv_first(x)
+            x = self.conv_after_body(self.forward_features(x)) + x
+            x = self.conv_before_upsample(x)
+            x = self.conv_last(self.upsample(x))
         else:
             # for image denoising and JPEG compression artifact reduction
             x_first = self.conv_first(x)

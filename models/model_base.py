@@ -172,6 +172,7 @@ class ModelBase():
             state_dict = network.state_dict()
             for ((key_old, param_old),(key, param)) in zip(state_dict_old.items(), state_dict.items()):
                 state_dict[key] = param_old
+            print("load path: ", load_path)
             network.load_state_dict(state_dict, strict=True)
             del state_dict_old, state_dict
 

@@ -223,7 +223,7 @@ def reshape_input(
     else:
         raise ValueError('{}-dim Tensor is not supported!'.format(x.dim()))
 
-    x = x.view(-1, 1, h, w)
+    x = x.reshape(-1, 1, h, w)
     return x, b, c, h, w
 
 def reshape_output(

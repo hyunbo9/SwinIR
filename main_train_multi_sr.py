@@ -166,7 +166,7 @@ def main(json_path='options/swinir/train_swinir_sr_hyunbo_default.json'):
     for epoch in range(1000000):  # keep running
         if opt['dist']:
             train_sampler.set_epoch(epoch)
-
+            
         for i, train_data in enumerate(train_loader):
 
             current_step += 1
