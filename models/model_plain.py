@@ -151,13 +151,13 @@ class ModelPlain(ModelBase):
         self.L = data['L'].to(self.device)
         if need_H:
             self.H = data['H'].to(self.device)
-
+        
     # ----------------------------------------
     # feed L to netG
     # ----------------------------------------
     def netG_forward(self):
-        self.E = self.netG(self.L)
-
+    
+        self.E = self.netG(x=self.L, target_size=self.H.size())
     # ----------------------------------------
     # update parameters and get loss
     # ----------------------------------------

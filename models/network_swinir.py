@@ -676,6 +676,7 @@ class SwinIR(nn.Module):
         self.upscale = upscale
         self.upsampler = upsampler
         self.window_size = window_size
+        self.sf = None
 
         #####################################################################################################
         ################################### 1, shallow feature extraction ###################################
@@ -771,10 +772,9 @@ class SwinIR(nn.Module):
             self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
             self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
         elif self.upsampler == 'bicubic':
-            # TODO: modify output image size to variable from config
             self.conv_before_upsample = nn.Sequential(nn.Conv2d(embed_dim, num_feat, 3, 1, 1),
                                                     nn.LeakyReLU(inplace=True))
-            self.upsample = BicubicUpsampler(output_image_size=192)
+            # self.upsample = BicubicUpsampler(output_image_size=192)   # forward 때 해야 하네...
             self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
         else:
             # for image denoising and JPEG compression artifact reduction
@@ -790,6 +790,9 @@ class SwinIR(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
+
+    def set_sf(self, sf):
+        self.sf = sf
 
     @torch.jit.ignore
     def no_weight_decay(self):
@@ -821,8 +824,7 @@ class SwinIR(nn.Module):
 
         return x
 
-    def forward(self, x):
-
+    def forward(self, x, target_size):
         H, W = x.shape[2:]
         x = self.check_image_size(x)
 
@@ -852,7 +854,9 @@ class SwinIR(nn.Module):
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
-            x = self.conv_last(self.upsample(x))
+
+            x = imresize.imresize(x, sizes=(target_size[-2], target_size[-1]))
+            x = self.conv_last(x)
         else:
             # for image denoising and JPEG compression artifact reduction
             x_first = self.conv_first(x)

@@ -18,19 +18,19 @@
       "name": "train_dataset"           // just name
       , "dataset_type": "multisr"         // "multisr" | "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
       , "dataroot_H": "trainsets/trainH/DIV2K/DIV2K_train_HR"// path of H training dataset. DIV2K (800 training images)
-      , "dataroot_L": null              // path of L training dataset
+      , "dataroot_L": null              // must not exist.
 
       , "H_size": 192                   // 96/144|192/384 | 128/192/256/512. LR patch size is set to 48 or 64 when compared with RCAN or RRDB.
 
-      , "dataloader_shuffle": false      // false or true 
-      , "dataloader_num_workers": 16
+      , "dataloader_shuffle": true      // false or true 
+      , "dataloader_num_workers": 32
       , "dataloader_batch_size": 4       // batch size 1 | 16 | 32 | 48 | 64 | 128. Total batch size =4x8=32 in SwinIR
     }
     , "test": {
       "name": "test_dataset"            // just name
       , "dataset_type": "multisr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
       , "dataroot_H": "testsets/Set5/original"  // path of H testing dataset
-      , "dataroot_L": null              // path of L testing dataset
+      , "dataroot_L": "testsets/Set5/LRbicx4_from_torch_version_fo_matlab"              // must exist.
 
     }
   }
@@ -62,7 +62,7 @@
     , "G_optimizer_lr": 2e-4            // learning rate
     , "G_optimizer_wd": 0               // weight decay, default 0
     , "G_optimizer_clipgrad": null      // unused
-    , "G_optimizer_reuse": true         // 
+    , "G_optimizer_reuse": true         
 
     , "G_scheduler_type": "MultiStepLR" // "MultiStepLR" is enough
     , "G_scheduler_milestones": [500000, 800000, 900000, 950000, 1000000]
@@ -74,8 +74,8 @@
     , "G_param_strict": false // true or false
     , "E_param_strict": false // true or false
 
-    , "checkpoint_test": 5000           // for testing
+    , "checkpoint_test": 10           // for testing
     , "checkpoint_save": 5000           // for saving model
-    , "checkpoint_print": 1           // for print
+    , "checkpoint_print": 2500           // for print
   }
 }

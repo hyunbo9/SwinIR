@@ -494,7 +494,6 @@ def augment_imgs(img_list, hflip=True, rot=True):
 # --------------------------------------------
 '''
 
-
 def modcrop(img_in, scale):
     # img_in: Numpy, HWC or HW
     img = np.copy(img_in)

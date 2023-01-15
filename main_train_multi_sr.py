@@ -17,7 +17,7 @@ from utils.utils_dist import get_dist_info, init_dist
 
 from data.select_dataset import define_Dataset
 from models.select_model import define_Model
-
+from data.dataset_multi_sr import RandomResizeCollater
 
 '''
 # --------------------------------------------
@@ -114,6 +114,7 @@ def main(json_path='options/swinir/train_swinir_sr_hyunbo_default.json'):
     # 1) create_dataset
     # 2) creat_dataloader for train and test
     # ----------------------------------------
+
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':
             train_set = define_Dataset(dataset_opt)
@@ -121,27 +122,32 @@ def main(json_path='options/swinir/train_swinir_sr_hyunbo_default.json'):
             if opt['rank'] == 0:
                 logger.info('Number of train images: {:,d}, iters: {:,d}'.format(len(train_set), train_size))
             if opt['dist']:
+                
                 train_sampler = DistributedSampler(train_set, shuffle=dataset_opt['dataloader_shuffle'], drop_last=True, seed=seed)
+                random_resize_collate_fn = RandomResizeCollater(patch_size=opt['datasets']['train']['H_size'], sf_list= opt['scale'])
                 train_loader = DataLoader(train_set,
                                           batch_size=dataset_opt['dataloader_batch_size']//opt['num_gpu'],
                                           shuffle=False,
                                           num_workers=dataset_opt['dataloader_num_workers']//opt['num_gpu'],
                                           drop_last=True,
                                           pin_memory=True,
-                                          sampler=train_sampler)
+                                          sampler=train_sampler,
+                                          collate_fn=random_resize_collate_fn)
             else:
+                random_resize_collate_fn = RandomResizeCollater(patch_size=opt['datasets']['train']['H_size'], sf_list= opt['scale'])
                 train_loader = DataLoader(train_set,
                                           batch_size=dataset_opt['dataloader_batch_size'],
                                           shuffle=dataset_opt['dataloader_shuffle'],
                                           num_workers=dataset_opt['dataloader_num_workers'],
                                           drop_last=True,
-                                          pin_memory=True)
+                                          pin_memory=True,
+                                          collate_fn=random_resize_collate_fn)
 
         elif phase == 'test':
             test_set = define_Dataset(dataset_opt)
             test_loader = DataLoader(test_set, batch_size=1,
                                      shuffle=False, num_workers=1,
-                                     drop_last=False, pin_memory=True)
+                                     drop_last=False, pin_memory=True,)
         else:
             raise NotImplementedError("Phase [%s] is not recognized." % phase)
 
@@ -237,8 +243,8 @@ def main(json_path='options/swinir/train_swinir_sr_hyunbo_default.json'):
                     # -----------------------
                     # calculate PSNR and PSNRY
                     # -----------------------
-                    current_psnr = util.calculate_psnr(E_img, H_img, border=border)
-                    current_psnr_y = util.calculate_psnr_y(E_img, H_img, border=border)
+                    current_psnr = util.calculate_psnr(E_img, H_img, border=0)
+                    current_psnr_y = util.calculate_psnr_y(E_img, H_img, border=0)
 
                     logger.info('{:->4d}--> {:>10s} | {:<4.2f}dB'.format(idx, image_name_ext, current_psnr))
 
