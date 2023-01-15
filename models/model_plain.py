@@ -156,7 +156,6 @@ class ModelPlain(ModelBase):
     # feed L to netG
     # ----------------------------------------
     def netG_forward(self):
-    
         self.E = self.netG(x=self.L, target_size=self.H.size())
     # ----------------------------------------
     # update parameters and get loss

@@ -55,34 +55,17 @@ class DatasetMultiSR(data.Dataset):
         return {'L': img_L, 'H': img_H, 'L_path': L_path, 'H_path': H_path}
     
     def get_item_at_test(self, index):
-        if not self.paths_L:
-            raise Error("have to exist L image path, because this setting is multi scale")
+        if self.paths_L:
+            raise Error("L path must not exist.")
 
-        sf = 4  # TODO: sf를 2, 3, 4 전체 다에 대해서 구현. 
-        # ------------------------------------
-        # get H image
-        # ------------------------------------
         H_path = self.paths_H[index]
+
         img_H = util.imread_uint(H_path, self.n_channels)
-        img_H = util.uint2single(img_H)
+        img_H = util.uint2single(img_H) 
+        img_H = util.single2tensor3(img_H)
 
-        # ------------------------------------
-        # modcrop
-        # ------------------------------------
-        img_H = util.modcrop(img_H, sf)   
-        # ------------------------------------
-        # get L image
-        # ------------------------------------
-
-        L_path = self.paths_L[index]
-        img_L = util.imread_uint(L_path, self.n_channels)
-        img_L = util.uint2single(img_L)
-
-        # ------------------------------------
-        # L/H pairs, HWC to CHW, numpy to tensor
-        # ------------------------------------
-        img_H, img_L = util.single2tensor3(img_H), util.single2tensor3(img_L)
-
+        img_L = img_H
+        L_path = self.paths_H[index]
         return {'L': img_L, 'H': img_H, 'L_path': L_path, 'H_path': H_path}
 
     def __len__(self):
@@ -96,8 +79,6 @@ class RandomResizeCollater(object):
 
     def __call__(self, samples):
         
-
-
         sf = random.choice(self.sf_list)
         L_size = self.patch_size // sf
 

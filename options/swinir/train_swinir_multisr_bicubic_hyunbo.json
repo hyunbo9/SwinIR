@@ -29,9 +29,12 @@
     , "test": {
       "name": "test_dataset"            // just name
       , "dataset_type": "multisr"         // "dncnn" | "dnpatch" | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch" | "jpeg"
-      , "dataroot_H": "testsets/Set5/original"  // path of H testing dataset
-      , "dataroot_L": "testsets/Set5/LRbicx4_from_torch_version_fo_matlab"              // must exist.
-
+      , "dataroot_H" : ""
+      , "test_set": {
+        "set5" : "testsets/Set5/original",
+        "set14": "testsets/Set14/original" // path of H testing dataset
+      },
+      "dataroot_L": null              // must not exist.
     }
   }
 
@@ -74,7 +77,7 @@
     , "G_param_strict": false // true or false
     , "E_param_strict": false // true or false
 
-    , "checkpoint_test": 10           // for testing
+    , "checkpoint_test": 5000           // for testing
     , "checkpoint_save": 5000           // for saving model
     , "checkpoint_print": 2500           // for print
   }

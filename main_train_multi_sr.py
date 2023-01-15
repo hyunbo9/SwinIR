@@ -19,6 +19,8 @@ from data.select_dataset import define_Dataset
 from models.select_model import define_Model
 from data.dataset_multi_sr import RandomResizeCollater
 
+from hyunbo import imresize
+
 '''
 # --------------------------------------------
 # training code for MSRResNet
@@ -144,10 +146,21 @@ def main(json_path='options/swinir/train_swinir_sr_hyunbo_default.json'):
                                           collate_fn=random_resize_collate_fn)
 
         elif phase == 'test':
-            test_set = define_Dataset(dataset_opt)
-            test_loader = DataLoader(test_set, batch_size=1,
+            set5_path = dataset_opt['test_set']['set5']
+            set14_path = dataset_opt['test_set']['set14']
+
+            dataset_opt['dataroot_H'] = set5_path 
+            set5_test_set = define_Dataset(dataset_opt)
+            set5_test_loader = DataLoader(set5_test_set, batch_size=1,
                                      shuffle=False, num_workers=1,
                                      drop_last=False, pin_memory=True,)
+
+            dataset_opt['dataroot_H'] = set14_path 
+            set14_test_set = define_Dataset(dataset_opt)
+            set14_test_loader = DataLoader(set14_test_set, batch_size=1,
+                                     shuffle=False, num_workers=1,
+                                     drop_last=False, pin_memory=True,)
+
         else:
             raise NotImplementedError("Phase [%s] is not recognized." % phase)
 
@@ -210,52 +223,75 @@ def main(json_path='options/swinir/train_swinir_sr_hyunbo_default.json'):
                 model.save(current_step)
 
             # -------------------------------
-            # 6) testing
+            # 6) testing     TODO: 여기서 set 5, set 12, multi scale에 대해 결과를 뽑아야 함. 
             # -------------------------------
             if current_step % opt['train']['checkpoint_test'] == 0 and opt['rank'] == 0:
+                # -------------------------------
+                # set 5 measure
+                # ------------------------------- 
 
-                avg_psnr = 0.0
-                avg_psnr_y = 0.0
-                idx = 0
 
-                for test_data in test_loader:
-                    idx += 1
-                    image_name_ext = os.path.basename(test_data['L_path'][0])
-                    img_name, ext = os.path.splitext(image_name_ext)
+                for test_set_name in ['set5', 'set14']:
+                    if test_set_name == 'set5':
+                        test_loader = set5_test_loader
+                    elif test_set_name == 'set14':
+                        test_loader = set14_test_loader
 
-                    img_dir = os.path.join(opt['path']['images'], img_name)
-                    util.mkdir(img_dir)
+                    for scale in [2, 3, 4]:
+                        avg_psnr = 0.0
+                        avg_psnr_y = 0.0
+                        idx = 0
+                        
+                        for test_data in test_loader:
 
-                    model.feed_data(test_data)
-                    model.test()
+                            idx += 1
 
-                    visuals = model.current_visuals()
-                    E_img = util.tensor2uint(visuals['E'])
-                    H_img = util.tensor2uint(visuals['H'])
 
-                    # -----------------------
-                    # save estimated image E
-                    # -----------------------
+                            ################################################
+                            # TODO: 이거 나중에 제외 시키자. bicubic이 continuous하게 작동안하는 거 같아 임시적으로 넣음.
+                            img_H = util.modcrop(test_data['H'].squeeze(), scale, channel_position=0)
+                            img_H = torch.from_numpy(img_H).unsqueeze(0)
+                            img_L = imresize.imresize(img_H, sizes=(img_H.shape[-2]//scale, img_H.shape[-1]//scale))
 
-                    save_img_path = os.path.join(img_dir, '{:s}_{:d}.png'.format(img_name, current_step))
-                    util.imsave(E_img, save_img_path)
+                            test_data['H'] = img_H
+                            test_data['L'] = img_L
+                            ################################################
 
-                    # -----------------------
-                    # calculate PSNR and PSNRY
-                    # -----------------------
-                    current_psnr = util.calculate_psnr(E_img, H_img, border=0)
-                    current_psnr_y = util.calculate_psnr_y(E_img, H_img, border=0)
+                            model.feed_data(test_data)
+                            model.test()
 
-                    logger.info('{:->4d}--> {:>10s} | {:<4.2f}dB'.format(idx, image_name_ext, current_psnr))
+                            visuals = model.current_visuals()
+                            E_img = util.tensor2uint(visuals['E'])
+                            H_img = util.tensor2uint(visuals['H'])
 
-                    avg_psnr += current_psnr
-                    avg_psnr_y += current_psnr_y
 
-                avg_psnr = avg_psnr / idx
-                avg_psnr_y = avg_psnr_y / idx 
+                            # -----------------------
+                            # calculate PSNR and PSNRY
+                            # -----------------------
 
-                # testing log
-                logger.info('<epoch:{:3d}, iter:{:8,d}, Average PSNR : {:<.2f}dB, Average PSNR_Y : {:<.2f}db\n'.format(epoch, current_step, avg_psnr, avg_psnr_y))
+                            current_psnr = util.calculate_psnr(E_img, H_img, border=0)
+                            current_psnr_y = util.calculate_psnr_y(E_img, H_img, border=0)
+                            #logger.info('{:->4d}--> {:>10s} | {:<4.2f}dB'.format(idx, image_name_ext, current_psnr))
+
+                            avg_psnr += current_psnr
+                            avg_psnr_y += current_psnr_y
+
+                        avg_psnr = avg_psnr / idx
+                        avg_psnr_y = avg_psnr_y / idx 
+
+                        # testing log
+                        logger.info('[{}, scale:{}] <epoch:{:3d}, iter:{:8,d}, Average PSNR : {:<.2f}dB, Average PSNR_Y : {:<.2f}db'.format(test_set_name, scale, epoch, current_step, avg_psnr, avg_psnr_y))
+
+
+                    print("##########################################")
+                print("##########################################" * 3)
+
+
+            # -------------------------------
+            # set 14 measure
+            # ------------------------------- 
+
+
 
 if __name__ == '__main__':
     main()
